@@ -18,12 +18,16 @@ SOPATHS=$(addprefix -Wl$(COMMA)-rpath$(COMMA), $(LIBS))
 
 CLIENT_SOURCES = client.cpp
 SERVER_SOURCES = server.cpp
+TEST_CLIENT_SOURCES = test_client.cpp
+TEST_SERVER_SOURCES = test_server.cpp
 PROTOS = $(wildcard *.proto)
 
 PROTO_OBJS = $(PROTOS:.proto=.pb.o)
 PROTO_GENS = $(PROTOS:.proto=.pb.h) $(PROTOS:.proto=.pb.cc)
 CLIENT_OBJS = $(addsuffix .o, $(basename $(CLIENT_SOURCES))) 
 SERVER_OBJS = $(addsuffix .o, $(basename $(SERVER_SOURCES))) 
+TEST_CLIENT_OBJS = $(addsuffix .o, $(basename $(TEST_CLIENT_SOURCES))) 
+TEST_SERVER_OBJS = $(addsuffix .o, $(basename $(TEST_SERVER_SOURCES))) 
 
 ifeq ($(SYSTEM),Darwin)
  ifneq ("$(LINK_SO)", "")
@@ -41,12 +45,12 @@ else ifeq ($(SYSTEM),Linux)
 endif
 
 .PHONY:all
-all: echo_client echo_server
+all: echo_client echo_server test_client test_server
 
 .PHONY:clean
 clean:
 	@echo "Cleaning"
-	@rm -rf echo_client echo_server $(PROTO_GENS) $(PROTO_OBJS) $(CLIENT_OBJS) $(SERVER_OBJS)
+	@rm -rf echo_client echo_server test_client test_server $(PROTO_GENS) $(PROTO_OBJS) $(CLIENT_OBJS) $(SERVER_OBJS) $(TEST_CLIENT_OBJS) $(TEST_SERVER_OBJS)
 
 echo_client:$(PROTO_OBJS) $(CLIENT_OBJS)
 	@echo "Linking $@"
@@ -57,6 +61,22 @@ else
 endif
 
 echo_server:$(PROTO_OBJS) $(SERVER_OBJS)
+	@echo "Linking $@"
+ifneq ("$(LINK_SO)", "")
+	@$(CXX) $(LIBPATHS) $(SOPATHS) $(LINK_OPTIONS_SO) -o $@
+else
+	@$(CXX) $(LIBPATHS) $(LINK_OPTIONS) -o $@
+endif
+
+test_client:$(PROTO_OBJS) $(TEST_CLIENT_OBJS)
+	@echo "Linking $@"
+ifneq ("$(LINK_SO)", "")
+	@$(CXX) $(LIBPATHS) $(SOPATHS) $(LINK_OPTIONS_SO) -o $@
+else
+	@$(CXX) $(LIBPATHS) $(LINK_OPTIONS) -o $@
+endif
+
+test_server:$(PROTO_OBJS) $(TEST_SERVER_OBJS)
 	@echo "Linking $@"
 ifneq ("$(LINK_SO)", "")
 	@$(CXX) $(LIBPATHS) $(SOPATHS) $(LINK_OPTIONS_SO) -o $@
